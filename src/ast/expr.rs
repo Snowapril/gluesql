@@ -41,6 +41,10 @@ pub enum Expr {
         data_type: DataType,
     },
     Nested(Box<Expr>),
+    MapAccess {
+        column: Box<Expr>,
+        keys: Vec<AstLiteral>, // TODO: Vec<Expr> to Vec<Value>
+    },
     Literal(AstLiteral),
     TypedString {
         data_type: DataType,

@@ -131,4 +131,13 @@ pub enum ValueError {
 
     #[error("selector requires MAP or LIST types")]
     SelectorRequiresMapOrListTypes,
+
+    #[error("mapaccess requires MAP or LIST types")]
+    MapAccessRequiresMapOrListTypes,
+
+    #[error("")]
+    MapAccessOutOfIndex,
+
+    #[error("")]
+    MapAccessKeyNotFound,
 }

@@ -104,6 +104,13 @@ pub fn translate_expr(sql_expr: &SqlExpr) -> Result<Expr> {
                 .map(|expr| translate_expr(expr.as_ref()).map(Box::new))
                 .transpose()?,
         }),
+        SqlExpr::MapAccess { column, keys } => Ok(Expr::MapAccess {
+            column: translate_expr(column).map(Box::new)?,
+            keys: keys
+                .iter()
+                .map(|value| translate_ast_literal(value))
+                .collect::<Result<_>>()?,
+        }),
         _ => Err(TranslateError::UnsupportedExpr(sql_expr.to_string()).into()),
     }
 }

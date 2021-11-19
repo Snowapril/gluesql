@@ -6,8 +6,8 @@ mod stateless;
 use {
     super::{context::FilterContext, select::select},
     crate::{
-        ast::{Aggregate, Expr, Function, TrimWhereField},
-        data::Value,
+        ast::{Aggregate, AstLiteral, Expr, Function, TrimWhereField},
+        data::{Value, ValueError},
         result::{Error, Result},
         store::GStore,
     },
@@ -21,6 +21,7 @@ use {
         borrow::Cow,
         cmp::{max, min},
         fmt::Debug,
+        ops::ControlFlow::{Break, Continue},
         rc::Rc,
     },
     uuid::Uuid,
@@ -192,6 +193,36 @@ pub async fn evaluate<'a, T: Debug>(
                 Some(er) => eval(er).await,
                 None => Ok(Evaluated::from(Value::Null)),
             }
+        }
+        Expr::MapAccess { column, keys } => {
+            let evaluated = eval(column).await?;
+
+            let result = keys.iter().fold(evaluated.try_into()?, |value, key| {
+                let key = match &key {
+                    AstLiteral::QuotedString(s) => "0",
+                    AstLiteral::Number(n) => "0",
+                };
+
+                let value = match &value {
+                    Value::Map(map) => map.get(&key).ok_or(ValueError::MapAccessKeyNotFound),
+                    Value::List(list) => key.parse::<usize>().ok().and_then(|i| list.get(i)).ok_or(ValueError::MapAccessOutOfIndex),
+                    _ => Err(ValueError::MapAccessRequiresMapOrListTypes),
+                }?;
+
+                match value {
+                    Some(Value::Map(map)) => Continue(Value::Map(map)),
+                    Some(Value::List(list)) => Continue(Value::List(list)),
+                    Some(value) => Continue(value),
+                    None => Break(()),
+                }
+            });
+
+            let value = match result {
+                Continue(Value::Map(map)) => Value::Map(map.clone()),
+                Continue(Value::List(list)) => Value::List(list.clone()),
+            };
+
+            Ok(Evaluated::from(value))
         }
     }
 }

@@ -13,6 +13,7 @@ pub mod function;
 pub mod index;
 pub mod join;
 pub mod limit;
+pub mod mapaccess;
 pub mod migrate;
 pub mod nested_select;
 pub mod nullable;
@@ -91,6 +92,7 @@ macro_rules! generate_store_tests {
         glue!(function_exp, function::exp_log::exp);
         glue!(join, join::join);
         glue!(join_blend, join::blend);
+        glue!(mapaccess, mapaccess::mapaccess);
         glue!(migrate, migrate::migrate);
         glue!(nested_select, nested_select::nested_select);
         glue!(nullable, nullable::nullable);
